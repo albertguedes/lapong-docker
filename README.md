@@ -1,6 +1,7 @@
 ![GitHub](https://img.shields.io/github/license/albertguedes/lapong-docker) ![GitHub language count](https://img.shields.io/github/languages/count/albertguedes/lapong-docker) ![GitHub last commit](https://img.shields.io/github/last-commit/albertguedes/lapong-docker)
 
-# LAPONG Docker - A Docker development environment with Laravel, PostgreSQL and Nginx
+# LAPONG Docker
+# A Docker development environment with Laravel, PostgreSQL and Nginx
 
 This project aims create a minimal viable development environment with Laravel, 
 PostgreSQL and Nginx. In the docker, i.e., less then it, nothing work. 
