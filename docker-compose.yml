@@ -48,7 +48,11 @@ services:
             - "9090:9000"
 
         volumes:
-            - ./app:/var/www/html
+            - ./src:/var/www/html
+
+        environment:
+            - WWWUSER=www-data
+            - WWWGROUP=www-data
 
     # Create the webserver image and container.
     webserver:
@@ -64,6 +68,13 @@ services:
         # Custom name for the container.
         container_name: nginx-container
 
+        volumes:
+            - ./src/public:/var/www/html/public
+
         # Expose the port "80" on host port "8080".
         ports: 
             - "8080:80"
+
+        # require use php-fpm container.
+        depends_on:
+            - php

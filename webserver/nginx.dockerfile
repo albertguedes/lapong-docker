@@ -8,4 +8,5 @@
 FROM nginx:1.24.0-alpine3.17
 
 COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
-WORKDIR /usr/share/nginx/html
+
+WORKDIR /var/www/html
