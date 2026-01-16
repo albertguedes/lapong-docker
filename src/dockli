@@ -1,308 +1,57 @@
 #!/usr/bin/env bash
 #
-# dockli - Professional Docker container command runner
+# dockli - exec commands inside an container
 #
-# A wrapper script to execute commands inside PHP-FPM container
-# with professional features: colored output, command aliases,
-# utility commands, and error handling.
+# created: 2023-08-09
+# author: albert r c guedes (albert@teko.net.br)
 #
-# Created: 2023-08-09
-# Author: Albert R. C. Guedes
-# License: MIT
+# Licensed by MIT License
 #
+set -e
 
-set -eo pipefail
-
-# Configuration
+# Set the docker path.
 DOCKER="/usr/bin/docker"
-CONTAINER="tornafacil-php-fpm-container"
-OPTIONS="--interactive --tty"
 
-# Colors (if terminal supports it)
-if [ -t 1 ]; then
-    RED=$(tput setaf 1)
-    GREEN=$(tput setaf 2)
-    YELLOW=$(tput setaf 3)
-    BLUE=$(tput setaf 4)
-    BOLD=$(tput bold)
-    RESET=$(tput sgr0)
-else
-    RED=""
-    GREEN=""
-    YELLOW=""
-    BLUE=""
-    BOLD=""
-    RESET=""
+# Verify if the docker is on system.
+if ! command -v $DOCKER > /dev/null; then
+    echo "Docker not found."
+    exit 1
 fi
 
-# Print functions
-info() {
-    echo "${BLUE}[INFO]${RESET} $*"
-}
+# Docker options:
+# --interative : Enable interation (input) with the container.
+# --tty : Allow a pseudo-TTY (terminal) to the container, enable the correct
+#         exibition of the output on terminal.
+# --user : Define the user inside the container with the host user, using the
+#          command 'id -u' to retrieve the ID of host user.
+#
+OPTIONS="--interactive --tty"
+#OPTIONS="--interactive --tty --user $(id -u)"
 
-success() {
-    echo "${GREEN}[OK]${RESET} $*"
-}
+# The name of the container that store the source code.
+CONTAINER='tornafacil-php-fpm-container'
 
-warn() {
-    echo "${YELLOW}[WARN]${RESET} $*"
-}
+# Verify if container dont exists.
+if ! $DOCKER ps -a --format "{{.Names}}" | grep -q $CONTAINER; then
+    echo "Container '$CONTAINER' dont exists."
+    exit 1
+fi
 
-error() {
-    echo "${RED}[ERROR]${RESET} $*" >&2
-}
+# Docker command executed with host user id to avoid conflict between host and
+# guest files permissions.
+CMD="$DOCKER exec $OPTIONS $CONTAINER"
 
-# Check dependencies
-check_docker() {
-    if ! command -v "$DOCKER" >/dev/null 2>&1; then
-        error "Docker not found. Please install Docker first."
-        exit 1
-    fi
-}
+# Verify if no argument was given.
+if [ -z "$#" ]; then
+    echo "Argument not given."
+    exit 1
+fi
 
-check_container() {
-    if ! $DOCKER ps -a --format "{{.Names}}" 2>/dev/null | grep -q "^${CONTAINER}$"; then
-        error "Container '${CONTAINER}' not found or not running."
-        error "Please start the containers with: docker-compose up -d"
-        exit 1
-    fi
-}
+# Exec the command on docker container.
+echo -e "\n\033[1;34m> '$CMD $@'\n"
 
-# Check if container is running
-is_running() {
-    $DOCKER ps --format "{{.Names}}" 2>/dev/null | grep -q "^${CONTAINER}$"
-}
+$CMD $@ || exit 1
 
-# Get container status
-get_status() {
-    if is_running; then
-        echo "running"
-    else
-        echo "stopped"
-    fi
-}
+exit 0
 
-# Execute command in container
-exec_cmd() {
-    local cmd="$*"
-    info "Executing: ${BOLD}${cmd}${RESET}"
-    $DOCKER exec $OPTIONS "$CONTAINER" bash -c "cd /var/www && $cmd"
-}
-
-# Show help
-show_help() {
-    cat <<EOF
-${BOLD}dockli${RESET} - Professional Docker container command runner
-
-${BOLD}USAGE:${RESET}
-    dockli [OPTIONS] <command> [arguments]
-
-${BOLD}OPTIONS:${RESET}
-    -h, --help          Show this help message
-    -v, --verbose       Verbose output
-    -d, --dry-run       Show command without executing
-    --version           Show version information
-
-${BOLD}COMMANDS:${RESET}
-    ${BOLD}art [args]${RESET}          Execute Artisan command (default)
-    ${BOLD}comp [args]${RESET}         Execute Composer command
-    ${BOLD}php [args]${RESET}          Execute PHP command
-    ${BOLD}node [args]${RESET}         Execute Node.js command
-    ${BOLD}npm [args]${RESET}          Execute npm command
-    ${BOLD}mysql [args]${RESET}        Execute MySQL/MariaDB client
-    ${BOLD}psql [args]${RESET}         Execute PostgreSQL client
-    ${BOLD}sh${RESET}                  Start interactive shell
-    ${BOLD}test${RESET}                Run PHPUnit tests
-    ${BOLD}lint${RESET}                Run code quality checks
-    ${BOLD}fresh${RESET}               Reset: clear cache, migrate, seed
-    ${BOLD}logs${RESET}                Show container logs (follow)
-    ${BOLD}status${RESET}              Show container status
-    ${BOLD}restart${RESET}             Restart containers
-    ${BOLD}stop${RESET}                Stop containers
-
-${BOLD}EXAMPLES:${RESET}
-    dockli art make:model Product
-    dockli art migrate --fresh
-    dockli test --filter=ProductTest
-    dockli comp require package/name
-    dockli npm run dev
-    dockli sh
-
-${BOLD}ENVIRONMENT:${RESET}
-    DOCKLI_VERBOSE    Set to 1 for verbose output
-    DOCKLI_DRY_RUN    Set to 1 for dry-run mode
-
-EOF
-}
-
-# Show version
-show_version() {
-    echo "dockli version 2.0.0"
-    echo "Author: Albert R. C. Guedes"
-}
-
-# Utility commands
-cmd_status() {
-    local status=$(get_status)
-    if [ "$status" = "running" ]; then
-        success "Container '${CONTAINER}' is ${GREEN}${status}${RESET}"
-    else
-        warn "Container '${CONTAINER}' is ${YELLOW}${status}${RESET}"
-    fi
-    echo ""
-    echo "${BOLD}Container Status:${RESET}"
-    $DOCKER ps --filter "name=$CONTAINER" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-}
-
-cmd_logs() {
-    local follow=""
-    if [ "${1:-}" = "-f" ] || [ "${1:-}" = "--follow" ]; then
-        follow="-f"
-        shift
-    fi
-    $DOCKER logs $follow --tail=100 "$CONTAINER"
-}
-
-cmd_restart() {
-    info "Restarting container '${CONTAINER}'..."
-    $DOCKER restart "$CONTAINER"
-    success "Container restarted successfully."
-}
-
-cmd_stop() {
-    info "Stopping container '${CONTAINER}'..."
-    $DOCKER stop "$CONTAINER"
-    success "Container stopped."
-}
-
-cmd_test() {
-    exec_cmd "composer test"
-}
-
-cmd_lint() {
-    info "Running code quality checks..."
-    exec_cmd "composer pint"
-    exec_cmd "vendor/bin/phpstan analyze --level=5"
-    success "Lint completed."
-}
-
-cmd_fresh() {
-    warn "This will clear cache, run migrations, and seed database."
-    read -p "Continue? [y/N] " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        info "Aborted."
-        exit 0
-    fi
-    exec_cmd "php artisan optimize:clear"
-    exec_cmd "php artisan migrate:fresh --seed"
-    success "Fresh deployment completed."
-}
-
-cmd_sh() {
-    info "Starting interactive shell in container..."
-    $DOCKER exec $OPTIONS "$CONTAINER" bash
-}
-
-# Main execution
-main() {
-    # Parse global options
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            -h|--help)
-                show_help
-                exit 0
-                ;;
-            -v|--verbose)
-                export DOCKLI_VERBOSE=1
-                shift
-                ;;
-            -d|--dry-run)
-                export DOCKLI_DRY_RUN=1
-                shift
-                ;;
-            --version)
-                show_version
-                exit 0
-                ;;
-            -*)
-                error "Unknown option: $1"
-                show_help
-                exit 1
-                ;;
-            *)
-                break
-                ;;
-        esac
-    done
-
-    # Check dependencies
-    check_docker
-    check_container
-
-    # No command given
-    if [ $# -eq 0 ]; then
-        show_help
-        exit 1
-    fi
-
-    # Parse command
-    local cmd="$1"
-    shift
-
-    # Execute command
-    case "$cmd" in
-        art|artisan)
-            exec_cmd "php artisan $*"
-            ;;
-        comp|composer)
-            exec_cmd "composer $*"
-            ;;
-        php)
-            exec_cmd "php $*"
-            ;;
-        node)
-            exec_cmd "node $*"
-            ;;
-        npm)
-            exec_cmd "npm $*"
-            ;;
-        mysql)
-            exec_cmd "mysql -u root -proot -D laravel $*"
-            ;;
-        psql|postgres)
-            exec_cmd "psql -U postgres -d laravel $*"
-            ;;
-        sh|shell)
-            cmd_sh
-            ;;
-        test)
-            cmd_test
-            ;;
-        lint)
-            cmd_lint
-            ;;
-        fresh)
-            cmd_fresh
-            ;;
-        logs)
-            cmd_logs "$@"
-            ;;
-        status)
-            cmd_status
-            ;;
-        restart)
-            cmd_restart
-            ;;
-        stop)
-            cmd_stop
-            ;;
-        *)
-            # Default: treat as artisan command
-            exec_cmd "php artisan $cmd $*"
-            ;;
-    esac
-}
-
-# Run main
-main "$@"
+# The End

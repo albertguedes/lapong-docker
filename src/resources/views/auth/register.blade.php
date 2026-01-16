@@ -9,7 +9,7 @@
                             <figure class="text-center mb-3">
                                 <img class="img-fluid" src="{{ asset('assets/images/bitmap.svg') }}" alt="Logo | Torna Fácil">
                             </figure>
-                            <h1 class="pt-2 h4" >{{ __('messages.register') }}</h1>
+                            <h1 class="pt-2 h4" >Cadastro</h1>
                         </div>
 
                         <x-auth.register.register-form ></x-auth.register.register-form>
@@ -17,7 +17,7 @@
                         <div class="row justify-content-center">
                             <div class="pt-3 mt-4 text-center col-11 border-top">
                                 <a class="btn btn-link" href="{{ route('login') }}">
-                                    <i class="fa-solid fa-arrow-left"></i> {{ __('messages.back') }}
+                                    <i class="fa-solid fa-arrow-left"></i> Voltar
                                 </a>
                             </div>
                         </div>

@@ -9,7 +9,7 @@
                             <figure class="text-center mb-3">
                                 <img class="img-fluid" src="{{ asset('assets/images/bitmap.svg') }}" alt="Logo | Torna Fácil">
                             </figure>
-                            <h1 class="pt-2 h4" >{{ __('messages.login') }}</h1>
+                            <h1 class="pt-2 h4" >Área do Cliente</h1>
                         </div>
 
                         <x-auth.login.login-form ></x-auth.login.login-form>
