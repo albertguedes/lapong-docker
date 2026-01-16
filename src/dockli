@@ -25,10 +25,11 @@ fi
 # --user : Define the user inside the container with the host user, using the
 #          command 'id -u' to retrieve the ID of host user.
 #
-OPTIONS="--interactive --tty --user $(id -u)"
+OPTIONS="--interactive --tty"
+#OPTIONS="--interactive --tty --user $(id -u)"
 
 # The name of the container that store the source code.
-CONTAINER='php-fpm-container'
+CONTAINER='tornafacil-php-fpm-container'
 
 # Verify if container dont exists.
 if ! $DOCKER ps -a --format "{{.Names}}" | grep -q $CONTAINER; then
@@ -36,7 +37,7 @@ if ! $DOCKER ps -a --format "{{.Names}}" | grep -q $CONTAINER; then
     exit 1
 fi
 
-# Docker command executed with host user id to avoid conflit beetween host and
+# Docker command executed with host user id to avoid conflict between host and
 # guest files permissions.
 CMD="$DOCKER exec $OPTIONS $CONTAINER"
 
@@ -47,6 +48,8 @@ if [ -z "$#" ]; then
 fi
 
 # Exec the command on docker container.
+echo -e "\n\033[1;34m> '$CMD $@'\n"
+
 $CMD $@ || exit 1
 
 exit 0

@@ -1,4 +1,80 @@
 body {
-    background-color: black;
-    color: white;
+    background-color: #f5f6fa;
+    font-size: 18px;
+}
+
+a, p, span, strong {
+    font-family: "Nunito", sans-serif;
+}
+
+#logo {
+    position:relative;
+    top: -2px;
+    width: 200px;
+}
+
+#scheduler-nav .active {
+    color: #0d6efd;
+    border-bottom: 3px solid #0d6efd;
+    border-radius: 0;
+}
+
+.text-male {
+    color: #0d6efd;
+}
+
+.text-female {
+    color: #dc3545;
+}
+
+.tornafacil-map {
+    width: 100%;
+    height: 400px;
+}
+
+.card {
+    border: none;
+}
+
+.card-calendar .card-header, .card-calendar .card-body {
+    background-color: #ffffff;
+}
+
+.card-calendar.sunday .card-header, .card-calendar.sunday .card-body {
+    background-color: azure;
+}
+
+.card-calendar.saturday .card-header, .card-calendar.saturday .card-body {
+    background-color: #eeeeee;
+}
+
+.card-event, .card-contact {
+    padding-left: 5px;
+}
+
+.card-event:hover, .card-contact:hover {
+    border-left: 5px solid #198754;
+    padding-left: 0;
+}
+
+.card-event.active, .card-contact.active {
+    border-left: 5px solid #198754;
+    padding-left: 0;
+}
+
+.card-event .card-title, .card-contact .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.record-badge {
+    top: 78px;
+    left: -26px;
+}
+
+.record-badge-static {
+    top: 38px;
+    left: -26px;
+    background-color: #c4c8cb;
+    color: #c4c8cb;
 }

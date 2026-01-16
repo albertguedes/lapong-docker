@@ -1,0 +1,3 @@
+$(function () {
+    setUniformHeight('card-dashboard');
+});

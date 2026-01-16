@@ -7,8 +7,6 @@
 # 
 # Distributed under the MIT License. See LICENSE for more information.
 #
-version: '3.8'
-
 services:
 
     # Create the database image and container.
@@ -16,32 +14,35 @@ services:
 
         # Create the image.        
         build: 
-            context: ./db/
-            dockerfile: postgresql.dockerfile
+            context: .
+            dockerfile: db/postgresql.dockerfile
         
         # Custom name for the image.
         image: postgresql-image
 
         # Custom name for the container.
-        container_name: postgresql-container
+        container_name: tornafacil-postgresql-container
 
         # Expose the port "5432" on host port "2345".
         ports: 
             - "2345:5432"
+            
+        networks:
+            - tornafacil-network
 
     # Create the php-fpm server image and container.
     php:
 
         # Create the image.        
         build: 
-            context: ./php/
-            dockerfile: php.dockerfile
+            context: .
+            dockerfile: php/php.dockerfile
         
         # Custom name for the image.
         image: php-fpm-image
 
         # Custom name for the container.
-        container_name: php-fpm-container
+        container_name: tornafacil-php-fpm-container
 
         # Expose the port "9000" of php-fpm on host port "9090".
         ports: 
@@ -54,19 +55,25 @@ services:
             - WWWUSER=www-data
             - WWWGROUP=www-data
 
+        depends_on:
+            - db
+
+        networks:
+            - tornafacil-network
+
     # Create the webserver image and container.
     webserver:
 
         # Create the image.        
         build: 
-            context: ./webserver/
-            dockerfile: nginx.dockerfile
+            context: .
+            dockerfile: webserver/nginx.dockerfile
         
         # Custom name for the image.
         image: nginx-image
 
         # Custom name for the container.
-        container_name: nginx-container
+        container_name: tornafacil-nginx-container
 
         volumes:
             - ./src/public:/var/www/html/public
@@ -78,3 +85,9 @@ services:
         # require use php-fpm container.
         depends_on:
             - php
+            
+        networks:
+            - tornafacil-network            
+networks:
+    tornafacil-network:
+        driver: bridge

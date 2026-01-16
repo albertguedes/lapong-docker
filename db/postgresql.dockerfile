@@ -9,6 +9,6 @@
 FROM postgres:alpine
 
 # Create a default database and user to postgresql.
-ENV POSTGRES_DB lapongdb
-ENV POSTGRES_USER lapong
-ENV POSTGRES_PASSWORD lapong
+ENV POSTGRES_DB tornafacildb
+ENV POSTGRES_USER tornafacil
+ENV POSTGRES_PASSWORD tornafacil

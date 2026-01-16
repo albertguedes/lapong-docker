@@ -5,8 +5,8 @@
 # 
 # Distributed under the MIT License. See LICENSE for more information.
 #
-FROM nginx:1.24.0-alpine3.17
+FROM nginx:alpine
 
-COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY ./webserver/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 WORKDIR /var/www/html

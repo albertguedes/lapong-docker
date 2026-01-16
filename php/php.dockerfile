@@ -5,7 +5,7 @@
 # 
 # Distributed under the MIT License. See LICENSE for more information.
 #
-FROM php:8.1.19-fpm-alpine3.17
+FROM php:fpm-alpine
 
 # Instale as dependências necessárias
 RUN apk update \
@@ -24,5 +24,7 @@ RUN apk add --update nodejs npm
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
 RUN php -r "unlink('composer-setup.php');"
+
+RUN mkdir -p /var/www/html && chown -R www-data:www-data /var/www/html
 
 WORKDIR /var/www/html
