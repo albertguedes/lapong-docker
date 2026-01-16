@@ -10,10 +10,10 @@
     <div class="card-body pb-0">
         <ul class="list-inline">
             <li class="list-inline-item">
-                <a href="{{ route('customer.schedulers') }}" class="btn btn-primary" >Calendário</a>
+                <a href="{{ route('customer.schedulers') }}" class="btn btn-primary" >{{ __('messages.calendar') }}</a>
             </li>
             <li class="list-inline-item">
-                Contatos
+                {{ __('messages.contacts') }}
             </li>
         </ul>
     </div>

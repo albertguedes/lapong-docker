@@ -3,7 +3,7 @@
     <div class="row my-4 d-flex justify-content-between align-items-center" >
         <h1>
             <div class="float-start">
-                Notificações
+                {{ __('messages.notifications') }}
             </div>
         </h1>
     </div>
@@ -24,7 +24,7 @@
     @else
     <div class="card" >
         <div class="card-body">
-            <h2 class="card-title text-center" >Nenhuma notificação nova.</h2>
+            <h2 class="card-title text-center" >{{ __('messages.no_new_notifications') }}</h2>
         </div>
     </div>
     @endif

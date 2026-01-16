@@ -12,9 +12,9 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="customer_id">Paciente</label>
+                            <label for="customer_id">{{ __('messages.patient') }}</label>
                             <select class="form-control @error('contact_id') is-invalid @enderror" id="contact_id" name="contact_id" >
-                                <option value="">Selecione</option>
+                                <option value="">{{ __('messages.select') }}</option>
                                 @foreach($contacts as $contact)
                                     <option value="{{ $contact->id }}">{{ $contact->profile->name() }}</option>
                                 @endforeach
@@ -27,7 +27,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="description">Título</label>
+                    <label for="description">{{ __('messages.title') }}</label>
                     <input class="form-control @error('title') is-invalid @enderror" id="title" name="title" value="{{ old('title') }}" ></input>
                     @error('description')
                     <div class="invalid-feedback">{{ $message }}</div>
@@ -35,14 +35,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="description">Descrição do caso</label>
+                    <label for="description">{{ __('messages.case_description') }}</label>
                     <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="3" value="{{ old('description') }}"></textarea>
                     @error('description')
                     <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
 
-                <button type="submit" class="btn btn-primary">Salvar</button>
+                <button type="submit" class="btn btn-primary">{{ __('messages.save') }}</button>
 
             </form>
         </div>

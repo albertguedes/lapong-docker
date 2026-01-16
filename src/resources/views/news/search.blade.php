@@ -1,7 +1,7 @@
 <x-layouts.main>
     <div class="row my-4 d-flex justify-content-between align-items-center" >
         <div class="col-12" >
-            <h1>Buscar em notícias</h1>
+            <h1>{{ __('messages.search') }} {{ __('messages.news') }}</h1>
         </div>
     </div>
     <div class="row" >
@@ -14,10 +14,10 @@
         <div class="col-12" >
             @if($result->isEmpty())
             <div class="alert alert-info text-center" >
-                Não foram encontrados resultados
+                {{ __('messages.no_results_found') }}
             </div>
             @else
-                <p>Foram encontrados {{ $result->count() }} resultados:</p>
+                <p>{{ __('messages.results_found') }} {{ $result->count() }}:</p>
 
                 @foreach ($result as $key => $new)
                 <div class="card mb-3" >

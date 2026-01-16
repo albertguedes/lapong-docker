@@ -1,9 +1,9 @@
-<h2 class="text-center mt-3 mb-5" >Calendario {{ now()->format('M Y') }}</h2>
+<h2 class="text-center mt-3 mb-5" >{{ __('messages.calendar') }} {{ now()->format('M Y') }}</h2>
 
 <table class="table table-unbordered" >
     <tbody>
         <tr>
-            @foreach([ 'Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab' ] as $week_day_name)
+            @foreach([ __('messages.sun'), __('messages.mon'), __('messages.tue'), __('messages.wed'), __('messages.thu'), __('messages.fri'), __('messages.sat') ] as $week_day_name)
             <th class="text-center bg-transparent border-0" >
                 <h2 class="card-title">{{ $week_day_name }}</h2>
             </th>

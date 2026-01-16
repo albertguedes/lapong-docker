@@ -1,0 +1,21 @@
+parameters:
+    level: 5
+    paths:
+        - app
+        - routes
+        - bootstrap
+    excludePaths:
+        - app/Http/Requests/StoreCompanyEmployerRequest.php
+        - app/Http/Requests/UpdateCompanyEmployerRequest.php
+    checkMissingIterableValueType: false
+    treatPhpDocElementsAsResolved:
+        - class
+        - interface
+        - trait
+    ignoreErrors:
+        - '#Undefined variable#'
+        - '#Undefined class#'
+    rules:
+        - PHPStan\Rules\Classes\UnusedClassRule
+        - PHPStan\Rules\Functions\UnusedFunctionRule
+        - PHPStan\Rules\Methods\UnusedMethodRule

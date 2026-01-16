@@ -10,14 +10,14 @@
         <div class="col-md-4 mb-4">
             <div class="card">
                 <div class="card-body">
-                    <p><a class="badge bg-secondary text-white" href="#" >Caso #{{ $record->case->id }}</a> <span class="badge bg-success">Em Andamento</span></p>
-                    <h2 class="card-title h4">Registro #{{ $record->id }}</h2>
+                    <p><a class="badge bg-secondary text-white" href="#" >{{ __('messages.case') }} #{{ $record->case->id }}</a> <span class="badge bg-success">{{ __('messages.in_progress') }}</span></p>
+                    <h2 class="card-title h4">{{ __('messages.record') }} #{{ $record->id }}</h2>
                     <h3 class="card-title h6">
                         <a href="{{ route('medical.record', $record) }}">
                             <i class="fa-solid fa-user-doctor"></i> {{ $record->doctor->id }}
                         </a>
                     </h3>
-                    <a href="{{ route('medical.record', $record) }}" class="btn btn-primary">Ver Detalhes</a>
+                    <a href="{{ route('medical.record', $record) }}" class="btn btn-primary">{{ __('messages.view_details') }}</a>
                 </div>
             </div>
         </div>

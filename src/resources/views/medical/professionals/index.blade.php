@@ -1,19 +1,19 @@
 <x-layouts.main>
 
     <div class="row my-4 d-flex justify-content-between align-items-center" >
-        <h1>
-            <div class="float-start">
-                Profissionais
-            </div>
-        </h1>
+            <h1>
+                <div class="float-start">
+                    {{ __('messages.professionals') }}
+                </div>
+            </h1>
     </div>
 
     <div class="row" >
         <div class="col-12" >
             <form class="mb-4" action="{{ route('medical.professional.search') }}" method="GET" >
                 <div class="input-group">
-                    <input type="text" class="form-control" name="query" placeholder="Pesquisar profissionais" required>
-                    <button type="submit" class="btn btn-primary">Buscar</button>
+                    <input type="text" class="form-control" name="query" placeholder="{{ __('messages.search_professionals') }}" required>
+                    <button type="submit" class="btn btn-primary">{{ __('messages.search') }}</button>
                 </div>
             </form>
         </div>
