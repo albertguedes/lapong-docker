@@ -17,6 +17,9 @@ make logs service=<db|php|webserver>  # View specific service logs
 make shell service=<php|db|webserver>  # Shell into container
 make test          # Test HTTP endpoints and DB
 make clean         # Remove containers and volumes
+make status        # Show running containers
+make backup        # Backup database to backup/*.sql.gz
+make restore file=<backup>  # Restore from backup
 ```
 
 ## Run Laravel commands (inside php container)
@@ -25,6 +28,11 @@ cd src
 ./dockli php artisan <command>
 ./dockli composer <command>
 ```
+
+## Endpoints
+- http://localhost:8080/ — Laravel app
+- http://localhost:8080/health — Health check
+- http://localhost:8080/metrics.php — JSON metrics
 
 ## Container ports (bound to 127.0.0.1)
 - nginx: 8080 → 80
