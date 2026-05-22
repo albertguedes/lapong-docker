@@ -1,11 +1,14 @@
 # TODO
 
+## v0.9.3 - Remove dockli ✅
+
+- [x] Remove dockli wrapper script (use docker exec directly)
+
 ## v0.9.2 - Laravel 12.x Installation ✅
 
 - [x] Install Laravel 12.x in src/
 - [x] Configure PostgreSQL connection (DB_HOST=db)
 - [x] Create metrics.php endpoint
-- [x] Create dockli wrapper script
 - [x] Fix storage/framework permissions
 - [x] Fix Makefile container names
 - [x] Fix backup script container names

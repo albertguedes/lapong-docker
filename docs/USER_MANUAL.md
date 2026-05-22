@@ -39,10 +39,12 @@ make restore      # Restore database (file=<backup>)
 ## Laravel Commands
 
 ```bash
+docker exec lapong-php-fpm-container php artisan <command>
+docker exec lapong-php-fpm-container composer <command>
+
+# Or shell in
 make shell service=php
-cd /var/www/html
-./dockli php artisan <command>
-./dockli composer <command>
+cd /var/www/html && php artisan <command>
 ```
 
 ## Endpoints

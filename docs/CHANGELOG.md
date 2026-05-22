@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.9.3] - 2026-05-22
+
+### Removed
+- **BREAKING**: Removed `src/dockli` wrapper script - use `docker exec lapong-php-fpm-container` directly
+
 ## [v0.9.2] - 2026-05-22
 
 ### Changed
@@ -13,7 +18,6 @@
 ### Added
 - Fresh Laravel 12.x in src/ with PostgreSQL configuration
 - src/public/metrics.php - JSON metrics endpoint
-- src/dockli - Artisan/composer wrapper script
 - src/storage and src/bootstrap/cache permissions (777)
 - docs/TODO.md updated with completed items
 
@@ -45,7 +49,3 @@
 - .env and .env.example for postgres config
 - webserver/nginx/nginx.conf (main nginx config)
 - docs/ directory with ARCHITECTURE, USER_MANUAL, CONTRIBUTING
-
-### Preserved
-- src/ - Laravel application
-- src/dockli - Laravel artisan/composer wrapper

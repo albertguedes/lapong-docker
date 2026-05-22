@@ -25,8 +25,8 @@ make restore file=<backup>  # Restore from backup
 ## Run Laravel commands (inside php container)
 ```bash
 cd src
-./dockli php artisan <command>
-./dockli composer <command>
+cd /var/www/html && php artisan <command>
+docker exec lapong-php-fpm-container composer <command>
 ```
 
 ## Endpoints

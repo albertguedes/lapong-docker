@@ -104,15 +104,15 @@ make restore file=<backup>  # Restore from backup
 ## Laravel Development
 
 ```bash
+# Run Laravel artisan commands directly
+docker exec lapong-php-fpm-container php artisan <command>
+
 # Shell into PHP container
 make shell service=php
+cd /var/www/html && php artisan <command>
 
-# Inside container, run Laravel commands
-cd /var/www/html
-./dockli php artisan migrate
-./dockli php artisan key:generate
-./dockli composer require <package>
-./dockli php artisan test
+# Run composer commands
+docker exec -it lapong-php-fpm-container composer require <package>
 ```
 
 ---
@@ -168,8 +168,7 @@ DB_PASSWORD=lapong
 ├── src/                    # Laravel application
 │   ├── public/
 │   │   └── metrics.php    # JSON metrics endpoint
-│   ├── .env               # Laravel configuration
-│   └── dockli             # Artisan/composer wrapper
+│   └── .env               # Laravel configuration
 ├── webserver/              # Nginx service
 │   ├── nginx.dockerfile
 │   └── nginx/
