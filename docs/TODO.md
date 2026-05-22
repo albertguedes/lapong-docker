@@ -1,5 +1,11 @@
 # TODO
 
+## v0.9.5 - Restore Tailwind via CDN ✅
+
+- [x] Remove Bootstrap CDN
+- [x] Add Tailwind CSS CDN for styling
+- [x] Keep jQuery + Alpine.js for future interactivity
+
 ## v0.9.4 - Remove NodeJS, Add jQuery + Alpine.js ✅
 
 - [x] Remove package.json, vite.config.js, node_modules

@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.9.5] - 2026-05-22
+
+### Changed
+- **RESTORED**: Tailwind CSS via CDN (`https://cdn.tailwindcss.com`) - page styling works again
+- Removed Bootstrap 5.3.3 CDN (no longer needed for this project)
+- Kept jQuery 3.7.1 + Alpine.js 3.14.8 for future interactivity
+
 ## [v0.9.4] - 2026-05-22
 
 ### Changed
