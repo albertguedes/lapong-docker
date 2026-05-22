@@ -83,7 +83,7 @@ Services with `depends_on` wait for health checks via `condition: service_health
 
 ## Network Architecture
 
-Custom bridge network `app-network` with DNS via container names:
-- `postgresql-container` (db service)
-- `php-fpm-container` (php service)
-- `nginx-container` (webserver service)
+Custom bridge network `lapong-network` with DNS via container names:
+- `lapong-postgresql-container` (db service)
+- `lapong-php-fpm-container` (php service)
+- `lapong-nginx-container` (webserver service)

@@ -1,57 +1,15 @@
-#!/usr/bin/env bash
-#
-# dockli - exec commands inside an container
-#
-# created: 2023-08-09
-# author: albert r c guedes (albert@teko.net.br)
-#
-# Licensed by MIT License
-#
+#!/bin/bash
 set -e
-
-# Set the docker path.
-DOCKER="/usr/bin/docker"
-
-# Verify if the docker is on system.
-if ! command -v $DOCKER > /dev/null; then
-    echo "Docker not found."
-    exit 1
+cd /var/www/html
+if [ "$1" = "php" ] || [ "$1" = "artisan" ]; then
+    shift
+    exec php artisan "$@"
+elif [ "$1" = "composer" ]; then
+    shift
+    exec composer "$@"
+elif [ "$1" = "test" ]; then
+    shift
+    exec php artisan test "$@"
+else
+    exec "$@"
 fi
-
-# Docker options:
-# --interative : Enable interation (input) with the container.
-# --tty : Allow a pseudo-TTY (terminal) to the container, enable the correct
-#         exibition of the output on terminal.
-# --user : Define the user inside the container with the host user, using the
-#          command 'id -u' to retrieve the ID of host user.
-#
-OPTIONS="--interactive --tty"
-#OPTIONS="--interactive --tty --user $(id -u)"
-
-# The name of the container that store the source code.
-CONTAINER='tornafacil-php-fpm-container'
-
-# Verify if container dont exists.
-if ! $DOCKER ps -a --format "{{.Names}}" | grep -q $CONTAINER; then
-    echo "Container '$CONTAINER' dont exists."
-    exit 1
-fi
-
-# Docker command executed with host user id to avoid conflict between host and
-# guest files permissions.
-CMD="$DOCKER exec $OPTIONS $CONTAINER"
-
-# Verify if no argument was given.
-if [ -z "$#" ]; then
-    echo "Argument not given."
-    exit 1
-fi
-
-# Exec the command on docker container.
-echo -e "\n\033[1;34m> '$CMD $@'\n"
-
-$CMD $@ || exit 1
-
-exit 0
-
-# The End
