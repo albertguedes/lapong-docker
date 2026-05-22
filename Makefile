@@ -39,9 +39,9 @@ shell:
 		exit 1; \
 	fi
 	@case "$(service)" in \
-		db) container="postgresql-container";; \
-		php) container="php-fpm-container";; \
-		webserver) container="nginx-container";; \
+		db) container="lapong-postgresql-container";; \
+		php) container="lapong-php-fpm-container";; \
+		webserver) container="lapong-nginx-container";; \
 		*) echo "Invalid service: $(service)"; exit 1;; \
 	esac
 	$(DOCKER) exec -it $$container /bin/sh
@@ -56,7 +56,7 @@ test:
 	@echo "Testing..."
 	@curl -sf http://localhost:8080/ > /dev/null && echo "OK: /"
 	@curl -sf http://localhost:8080/index.php > /dev/null && echo "OK: /index.php"
-	@$(DOCKER) exec postgresql-container pg_isready -U lapong -d lapongdb && echo "OK: db"
+	@$(DOCKER) exec lapong-postgresql-container pg_isready -U lapong -d lapongdb && echo "OK: db"
 	@echo "All tests passed"
 
 crontab:

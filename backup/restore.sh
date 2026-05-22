@@ -6,7 +6,7 @@
 set -e
 
 BACKUP_FILE="$1"
-CONTAINER="${POSTGRES_CONTAINER:-postgresql-container}"
+CONTAINER="${POSTGRES_CONTAINER:-lapong-postgresql-container}"
 DB_NAME="${POSTGRES_DB:-lapongdb}"
 DB_USER="${POSTGRES_USER:-lapong}"
 BACKUP_DIR="$(dirname "$0")"

@@ -18,7 +18,7 @@ services:
             dockerfile: postgresql.dockerfile
 
         image: postgresql-image
-        container_name: postgresql-container
+        container_name: lapong-postgresql-container
 
         ports:
             - "127.0.0.1:2345:5432"
@@ -30,7 +30,7 @@ services:
             - ./database/data:/var/lib/postgresql/data
 
         networks:
-            - app-network
+            - lapong-network
 
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lapong} -d ${POSTGRES_DB:-lapongdb}"]
@@ -47,7 +47,7 @@ services:
             dockerfile: php.dockerfile
 
         image: php-fpm-image
-        container_name: php-fpm-container
+        container_name: lapong-php-fpm-container
 
         env_file:
             - .env
@@ -56,10 +56,10 @@ services:
             - ./src:/var/www/html
 
         networks:
-            - app-network
+            - lapong-network
 
         environment:
-            - POSTGRES_HOST=postgresql-container
+            - POSTGRES_HOST=db
             - POSTGRES_PORT=5432
 
         depends_on:
@@ -67,7 +67,7 @@ services:
                 condition: service_healthy
 
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -h postgresql-container -U ${POSTGRES_USER:-lapong} -d ${POSTGRES_DB:-lapongdb}"]
+            test: ["CMD-SHELL", "pg_isready -h db -U ${POSTGRES_USER:-lapong} -d ${POSTGRES_DB:-lapongdb}"]
             interval: 10s
             timeout: 5s
             retries: 3
@@ -80,7 +80,7 @@ services:
             dockerfile: nginx.dockerfile
 
         image: nginx-image
-        container_name: nginx-container
+        container_name: lapong-nginx-container
 
         ports:
             - "127.0.0.1:8080:80"
@@ -89,7 +89,7 @@ services:
             - ./src/public:/var/www/html/public:ro
 
         networks:
-            - app-network
+            - lapong-network
 
         depends_on:
             php:
@@ -105,5 +105,5 @@ services:
         restart: unless-stopped
 
 networks:
-    app-network:
+    lapong-network:
         driver: bridge

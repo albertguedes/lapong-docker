@@ -5,4 +5,4 @@
 0 2 * * * /home/albert/Development/DOCKER/lapong_docker/backup/backup.sh >> /home/albert/Development/DOCKER/lapong_docker/backup/cron.log 2>&1
 
 # Health check every 5 minutes
-# */5 * * * * curl -sf http://localhost:8080/health > /dev/null || echo "Health check failed at $(date)" >> /home/albert/Development/DOCKER/lapong_docker/backup/health.log
+# */5 * * * * /home/albert/Development/DOCKER/lapong_docker/backup/health.sh >> /home/albert/Development/DOCKER/lapong_docker/backup/health.log 2>&1

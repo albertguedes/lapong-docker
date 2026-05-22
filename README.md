@@ -197,7 +197,7 @@ Services with `depends_on` wait for health checks via `condition: service_health
 
 ## Security
 
-- **Network Isolation**: Custom bridge network (`app-network`) with DNS via container names
+- **Network Isolation**: Custom bridge network (`lapong-network`) with DNS via container names
 - **Localhost Ports**: All ports bound to `127.0.0.1` (localhost only)
 - **Secrets Management**: Database credentials via `.env` file, never in code
 - **Read-Only Volumes**: `src/public` mounted as `:ro` (read-only) in nginx

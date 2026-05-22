@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.9.2] - 2026-05-22
+
+### Changed
+- **BREAKING**: Replaced old Laravel app with fresh Laravel 12.x installation
+- Fixed container names in Makefile and backup scripts (`lapong-*` prefix)
+- Fixed network name: `app-network` → `lapong-network`
+- Updated nginx fastcgi_pass: `php-fpm-container` → `php`
+- Updated crontab.txt health check command
+
+### Added
+- Fresh Laravel 12.x in src/ with PostgreSQL configuration
+- src/public/metrics.php - JSON metrics endpoint
+- src/dockli - Artisan/composer wrapper script
+- src/storage and src/bootstrap/cache permissions (777)
+- docs/TODO.md updated with completed items
+
 ## [v0.9.1] - 2026-05-21
 
 ### Added

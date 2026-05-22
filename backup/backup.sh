@@ -4,7 +4,7 @@
 #
 set -e
 
-CONTAINER="${POSTGRES_CONTAINER:-postgresql-container}"
+CONTAINER="${POSTGRES_CONTAINER:-lapong-postgresql-container}"
 BACKUP_DIR="$(dirname "$0")"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 DB_NAME="${POSTGRES_DB:-lapongdb}"
