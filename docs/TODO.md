@@ -1,5 +1,13 @@
 # TODO
 
+## v0.9.4 - Remove NodeJS, Add jQuery + Alpine.js ✅
+
+- [x] Remove package.json, vite.config.js, node_modules
+- [x] Remove src/resources/js/ and src/resources/css/
+- [x] Add Bootstrap 5, jQuery, Alpine.js CDN
+- [x] Create public/assets/js/ and public/assets/css/
+- [x] Update welcome.blade.php with CDN links
+
 ## v0.9.3 - Remove dockli ✅
 
 - [x] Remove dockli wrapper script (use docker exec directly)

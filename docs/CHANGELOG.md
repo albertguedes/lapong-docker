@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.9.4] - 2026-05-22
+
+### Changed
+- **BREAKING**: Removed NodeJS/Vite/Tailwind - no more `package.json`, `vite.config.js`
+- Removed `src/resources/js/` and `src/resources/css/` (Vite asset pipeline)
+- Removed `src/node_modules/` (5000+ npm vulnerability files)
+
+### Added
+- Bootstrap 5.3.3 via CDN for base styling
+- jQuery 3.7.1 via CDN for DOM manipulation
+- Alpine.js 3.14.8 via CDN for reactive behavior
+- `public/assets/js/script.js` - Main JS initialization
+- `public/assets/js/app.js` - Application JS
+- `public/assets/css/style.css` - Main stylesheet
+- Welcome page updated with CDN links instead of Vite
+
 ## [v0.9.3] - 2026-05-22
 
 ### Removed
