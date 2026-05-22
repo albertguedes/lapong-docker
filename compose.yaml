@@ -1,0 +1,109 @@
+#
+# compose.yaml - Lapong Docker Development Environment
+#
+# 3 containers: nginx + php-fpm + postgresql
+#
+# Usage:
+#   make up      - Start all services
+#   make down    - Stop all services
+#   make build   - Rebuild images
+#   make test    - Run tests
+#
+
+services:
+
+    db:
+        build:
+            context: ./database/
+            dockerfile: postgresql.dockerfile
+
+        image: postgresql-image
+        container_name: postgresql-container
+
+        ports:
+            - "127.0.0.1:2345:5432"
+
+        env_file:
+            - .env
+
+        volumes:
+            - ./database/data:/var/lib/postgresql/data
+
+        networks:
+            - app-network
+
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lapong} -d ${POSTGRES_DB:-lapongdb}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+
+        restart: unless-stopped
+
+    php:
+        build:
+            context: ./php/
+            dockerfile: php.dockerfile
+
+        image: php-fpm-image
+        container_name: php-fpm-container
+
+        env_file:
+            - .env
+
+        volumes:
+            - ./src:/var/www/html
+
+        networks:
+            - app-network
+
+        environment:
+            - POSTGRES_HOST=postgresql-container
+            - POSTGRES_PORT=5432
+
+        depends_on:
+            db:
+                condition: service_healthy
+
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -h postgresql-container -U ${POSTGRES_USER:-lapong} -d ${POSTGRES_DB:-lapongdb}"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+
+        restart: unless-stopped
+
+    webserver:
+        build:
+            context: ./webserver/
+            dockerfile: nginx.dockerfile
+
+        image: nginx-image
+        container_name: nginx-container
+
+        ports:
+            - "127.0.0.1:8080:80"
+
+        volumes:
+            - ./src/public:/var/www/html/public:ro
+
+        networks:
+            - app-network
+
+        depends_on:
+            php:
+                condition: service_healthy
+
+        healthcheck:
+            test: ["CMD-SHELL", "wget -qO- http://localhost:80/ > /dev/null || exit 0"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 10s
+
+        restart: unless-stopped
+
+networks:
+    app-network:
+        driver: bridge

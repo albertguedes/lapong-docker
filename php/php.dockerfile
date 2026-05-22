@@ -1,30 +1,20 @@
+#
 # php.dockerfile - a dockerfile to create a php-fpm server image.
 #
-# created: 2023-06-11
+# created: 2022-12-07
 # author: albert r. carnier guedes (albert@teko.net.br)
-# 
+#
 # Distributed under the MIT License. See LICENSE for more information.
 #
-FROM php:fpm-alpine
+FROM php:8.4-fpm-alpine
 
-# Instale as dependências necessárias
-RUN apk update \
-    && apk add --no-cache postgresql-dev
+RUN apk add --no-cache libpq-dev postgresql-client \
+    && docker-php-ext-install pgsql pdo pdo_pgsql \
+    && chown -R www-data:www-data /var/www
 
-# Install php modules to php-pgsql.
-RUN apk add --no-cache libpq-dev
+# Install Composer
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
+    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
+    && php -r "unlink('composer-setup.php');"
 
-# Instale as extensões PHP necessárias
-RUN docker-php-ext-install pdo_pgsql pgsql
-
-# Install npm
-RUN apk add --update nodejs npm
-
-# Download and install Composer
-RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-RUN php -r "unlink('composer-setup.php');"
-
-RUN mkdir -p /var/www/html && chown -R www-data:www-data /var/www/html
-
-WORKDIR /var/www/html
+USER www-data

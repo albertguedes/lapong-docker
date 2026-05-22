@@ -1,0 +1,26 @@
+#
+# jail.local - Fail2ban configuration
+#
+# Installation:
+#   sudo apt install fail2ban
+#   sudo cp security/jail.local /etc/fail2ban/jail.local
+#   sudo systemctl restart fail2ban
+#
+
+[nginx-http-auth]
+enabled = true
+port = http,https
+filter = nginx-http-auth
+logpath = /var/log/nginx/*error*.log
+maxretry = 5
+findtime = 600
+bantime = 86400
+
+[nginx-noscript]
+enabled = true
+port = http,https
+filter = nginx-noscript
+logpath = /var/log/nginx/*access*.log
+maxretry = 3
+findtime = 600
+bantime = 86400
