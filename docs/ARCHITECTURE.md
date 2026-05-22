@@ -39,7 +39,7 @@ Lapong Docker development environment for Laravel + PostgreSQL.
 | Property | Value |
 |----------|-------|
 | Image | nginx:1.27-alpine |
-| Container | nginx-container |
+| Container | lapong-nginx-container |
 | Host Port | 8080 |
 | Container Port | 80 |
 | Configuration | webserver/nginx/default.conf |
@@ -50,7 +50,7 @@ Lapong Docker development environment for Laravel + PostgreSQL.
 | Property | Value |
 |----------|-------|
 | Image | php:8.4-fpm-alpine |
-| Container | php-fpm-container |
+| Container | lapong-php-fpm-container |
 | Host Port | 9090 |
 | Container Port | 9000 |
 | Volume Mount | ./src → /var/www/html |
@@ -61,7 +61,7 @@ Lapong Docker development environment for Laravel + PostgreSQL.
 | Property | Value |
 |----------|-------|
 | Image | postgres:17-alpine |
-| Container | postgresql-container |
+| Container | lapong-postgresql-container |
 | Host Port | 2345 |
 | Container Port | 5432 |
 | Volume Mount | `./database/data` → `/var/lib/postgresql/data` |
@@ -84,6 +84,6 @@ Services with `depends_on` wait for health checks via `condition: service_health
 ## Network Architecture
 
 Custom bridge network `lapong-network` with DNS via container names:
-- `lapong-postgresql-container` (db service)
-- `lapong-php-fpm-container` (php service)
-- `lapong-nginx-container` (webserver service)
+- `db` (PostgreSQL service)
+- `php` (PHP-FPM service)
+- `webserver` (nginx service)

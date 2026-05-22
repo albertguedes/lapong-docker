@@ -8,6 +8,7 @@
 - Fixed network name: `app-network` → `lapong-network`
 - Updated nginx fastcgi_pass: `php-fpm-container` → `php`
 - Updated crontab.txt health check command
+- Updated docs/ARCHITECTURE.md with correct container names
 
 ### Added
 - Fresh Laravel 12.x in src/ with PostgreSQL configuration
