@@ -1,5 +1,31 @@
 # Changelog
 
+## [v0.10.1] - 2026-05-22
+
+### Changed
+- Synced infrastructure with minimal_viable v0.10.1 (host networking, Dockerfile naming, backup/CI)
+- Replaced bridge network + port mappings with `network_mode: host` (8080, 9000, 5432 on loopback)
+- Renamed `*.dockerfile` → `Dockerfile` in database/, php/, webserver/
+- PHP image: build from repo root, PHPUnit 11, `PHP_VERSION` build arg, `.dockerignore` for Laravel vendor
+- Makefile: `test-unit`, `test-integration`, `test-backup`; Laravel endpoint checks in `make test`
+- Backup: GPG/S3/B2/rsync support via `backup/config.sh`, `test_backup.sh`, `verify-restore.sh`
+- Added `.github/workflows/ci.yml` and `cd.yml`, `VERSION`, `php/tests/` integration suite
+- Nginx: listen 8080, FastCGI `127.0.0.1:9000`, mount full `./src` (Laravel `public` root unchanged)
+
+### Added
+- `AGENTS.md` updated for host networking and new make targets
+
+### Fixed
+- PHPUnit installed via Composer in PHP image (phar.phpunit.de returned 520 during build)
+
+### Documentation
+- Updated README, ARCHITECTURE, USER_MANUAL, CONTRIBUTING for host networking and test targets
+
+### Verified
+- `make test`: HTTP `/`, `/health`, `/up`, `/metrics.php`, `pg_isready` — OK
+- `make test-unit`: 2 tests — OK
+- `make test-integration`: 9 tests — OK
+
 ## [v0.9.5] - 2026-05-22
 
 ### Changed

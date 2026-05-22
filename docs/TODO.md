@@ -1,5 +1,14 @@
 # TODO
 
+## v0.10.1 - Sync with minimal_viable ✅
+
+- [x] Host networking (8080, 9000, 5432)
+- [x] Dockerfile naming and PHP build from repo root
+- [x] PHPUnit infra tests (`php/tests/`)
+- [x] Backup scripts (config, test, verify-restore)
+- [x] GitHub Actions CI/CD
+- [x] Documentation and changelog update
+
 ## v0.9.5 - Restore Tailwind via CDN ✅
 
 - [x] Remove Bootstrap CDN

@@ -1,6 +1,6 @@
 # Lapong Docker
 
-A production-ready Docker development environment for **Laravel 10+** applications with **PostgreSQL 17** database. Built for enterprise teams requiring consistent, isolated, and secure local development environments.
+A production-ready Docker development environment for **Laravel 12** applications with **PostgreSQL 17**. Based on [minimal_viable](https://github.com/albertguedes/minimal-viable-docker-development-environment) with Laravel-specific nginx and `src/` layout.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PHP 8.4](https://img.shields.io/badge/PHP-8.4-blue.svg)](https://www.php.net/releases/8.4/en.php)
@@ -13,11 +13,11 @@ A production-ready Docker development environment for **Laravel 10+** applicatio
 | Feature | Benefit |
 |---------|---------|
 | **Zero Configuration** | `make build && make up` — fully operational in under 2 minutes |
-| **Healthcheck-Guaranteed** | Services start only when dependencies are healthy (`depends_on` + `condition: service_healthy`) |
+| **Host-Independent** | Only Docker needed on host; Composer and PHPUnit run in containers |
 | **Production Mirror** | Same image versions (nginx:1.27, php:8.4, postgres:17) used in CI/CD pipelines |
 | **Secrets Isolation** | Database credentials via `.env` file, never in code or Dockerfiles |
-| **Network Isolation** | Custom bridge network (`app-network`) with DNS via container names |
-| **Localhost-Only Ports** | All ports bound to `127.0.0.1` — no exposure to external networks |
+| **Host Networking** | Services bind on loopback (8080, 9000, 5432) — aligned with minimal_viable |
+| **CI/CD Ready** | GitHub Actions for tests, Hadolint, Trivy, and GHCR releases |
 | **Monorepo Ready** | Laravel source (`src/`) mounted as volume for real-time code iteration |
 
 ---
@@ -27,32 +27,30 @@ A production-ready Docker development environment for **Laravel 10+** applicatio
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         HOST MACHINE                            │
-│                      (127.0.0.1:8080, 2345)                     │
 │                                                                 │
-│   ┌──────────────────────────────────────────────────────────┐   │
-│   │              Docker Network (app-network)                │   │
-│   │                                                          │   │
-│   │   ┌──────────────┐     ┌──────────────┐    ┌─────────┐ │   │
-│   │   │  nginx:1.27  │────▶│  php:8.4     │────▶│pg:17   │ │   │
-│   │   │  :8080→:80   │     │  :9090→:9000 │    │:2345→:5432│ │   │
-│   │   └──────────────┘     └──────────────┘    └─────────┘ │   │
-│   └──────────────────────────────────────────────────────────┘   │
+│   127.0.0.1:8080  ── nginx (lapong-nginx-container)             │
+│                         │ fastcgi_pass 127.0.0.1:9000           │
+│                         ▼                                       │
+│   127.0.0.1:9000  ── PHP-FPM (lapong-php-fpm-container)         │
+│                         ▼                                       │
+│   127.0.0.1:5432  ── PostgreSQL (lapong-postgresql-container)   │
 │                                                                 │
-│   ./src ──────────────────────────▶ /var/www/html (volume)       │
-│   ./src/public ────────────────────▶ /var/www/html/public:ro     │
-│   ./database/data ──────────────────▶ /var/lib/postgresql/data  │
+│   ./src ──────────────────────▶ /var/www/html (php + nginx)     │
+│   ./database/data ────────────▶ /var/lib/postgresql/data        │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+All services use **host networking** (see `compose.yaml`).
 
 ---
 
 ## Services
 
-| Service | Image | Host Port | Container Port | Purpose |
-|---------|-------|-----------|----------------|---------|
-| **webserver** | nginx:1.27-alpine | 8080 | 80 | HTTP server, FastCGI proxy |
-| **php** | php:8.4-fpm-alpine | 9090 | 9000 | PHP-FPM FastCGI processor |
-| **db** | postgres:17-alpine | 2345 | 5432 | PostgreSQL database |
+| Service | Image | Port (loopback) | Purpose |
+|---------|-------|-----------------|---------|
+| **webserver** | nginx:1.27-alpine | 8080 | HTTP server, Laravel front controller |
+| **php** | php:8.4-fpm-alpine | 9000 | PHP-FPM FastCGI processor |
+| **db** | postgres:17-alpine | 5432 | PostgreSQL database |
 
 ---
 
@@ -93,7 +91,10 @@ make down              # Stop all containers
 make logs              # View all logs
 make logs service=db   # View specific service logs
 make shell service=php # Shell into container
-make test              # Run HTTP + DB tests
+make test              # Run HTTP + DB + PHPUnit tests
+make test-unit         # Unit tests only
+make test-integration  # Integration tests only
+make test-backup       # Backup script tests
 make clean             # Remove containers and volumes
 make backup            # Backup database to backup/*.sql.gz
 make restore file=<backup>  # Restore from backup
@@ -122,7 +123,8 @@ docker exec -it lapong-php-fpm-container composer require <package>
 | URL | Method | Description |
 |-----|--------|-------------|
 | http://localhost:8080/ | GET | Laravel application |
-| http://localhost:8080/health | GET | Health check (returns "OK") |
+| http://localhost:8080/health | GET | Nginx health check (returns "OK") |
+| http://localhost:8080/up | GET | Laravel health check |
 | http://localhost:8080/metrics.php | GET | JSON metrics (db size, connections, php info) |
 
 ---
@@ -137,7 +139,7 @@ POSTGRES_PASSWORD=lapong
 
 # Laravel (from src/.env)
 DB_CONNECTION=pgsql
-DB_HOST=postgresql-container
+DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=lapongdb
 DB_USERNAME=lapong
@@ -152,9 +154,10 @@ DB_PASSWORD=lapong
 .
 ├── backup/                 # Backup/restore scripts
 │   ├── backup.sh
+│   ├── config.sh
 │   └── restore.sh
-├── database/                # PostgreSQL service
-│   ├── postgresql.dockerfile
+├── database/               # PostgreSQL service
+│   ├── Dockerfile
 │   └── data/               # Persistent volume
 ├── docs/                   # Documentation
 │   ├── ARCHITECTURE.md     # Technical architecture
@@ -162,7 +165,9 @@ DB_PASSWORD=lapong
 │   ├── CONTRIBUTING.md     # Contribution guidelines
 │   └── CHANGELOG.md       # Version history
 ├── php/                    # PHP-FPM service
-│   └── php.dockerfile
+│   ├── Dockerfile
+│   ├── phpunit.xml.dist
+│   └── tests/
 ├── security/               # Security configs
 │   └── jail.local          # Fail2ban configuration
 ├── src/                    # Laravel application
@@ -170,7 +175,7 @@ DB_PASSWORD=lapong
 │   │   └── metrics.php    # JSON metrics endpoint
 │   └── .env               # Laravel configuration
 ├── webserver/              # Nginx service
-│   ├── nginx.dockerfile
+│   ├── Dockerfile
 │   └── nginx/
 │       ├── nginx.conf     # Main nginx config
 │       └── default.conf   # Server config
@@ -182,25 +187,13 @@ DB_PASSWORD=lapong
 
 ---
 
-## Health Checks
-
-| Service | Check | Interval | Timeout | Retries |
-|---------|-------|----------|---------|---------|
-| db | `pg_isready` | 10s | 5s | 5 |
-| php | `pg_isready` via network | 10s | 5s | 3 |
-| webserver | `wget -qO- http://localhost:80/` | 10s | 5s | 3 |
-
-Services with `depends_on` wait for health checks via `condition: service_healthy` before starting dependents.
-
----
-
 ## Security
 
-- **Network Isolation**: Custom bridge network (`lapong-network`) with DNS via container names
-- **Localhost Ports**: All ports bound to `127.0.0.1` (localhost only)
+- **Host networking**: Services listen on loopback (not exposed on all interfaces by default)
 - **Secrets Management**: Database credentials via `.env` file, never in code
-- **Read-Only Volumes**: `src/public` mounted as `:ro` (read-only) in nginx
-- **No Root Containers**: php-fpm runs as `www-data`, nginx as `nginx`
+- **Read-Only Volumes**: `./src` mounted read-only in nginx
+- **No Root Containers**: php-fpm runs as `www-data`
+- **CI**: Hadolint on Dockerfiles, Trivy filesystem scan
 
 **For production deployments**, consider:
 - Docker Secrets for credential management
@@ -222,11 +215,15 @@ cat .env
 **Database connection fails:**
 ```bash
 make shell service=php
-pg_isready -h postgresql-container -U lapong -d lapongdb
+pg_isready -h 127.0.0.1 -p 5432 -U lapong -d lapongdb
 ```
 
-**Port already in use:**
+**Port already in use (8080, 9000, or 5432):**
+
+Only one host-networked stack can run at a time. Stop other projects (e.g. minimal_viable) first:
+
 ```bash
+make down   # in the other project
 lsof -i :8080
 ```
 

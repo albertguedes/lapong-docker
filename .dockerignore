@@ -1,0 +1,12 @@
+# Laravel artifacts — excluded from image build (mounted at runtime)
+src/vendor
+src/node_modules
+src/storage/logs
+src/storage/framework/cache
+src/storage/framework/sessions
+src/storage/framework/views
+src/bootstrap/cache/*.php
+.git
+database/data
+backup/*.sql.gz
+backup/*.gpg

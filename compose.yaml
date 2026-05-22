@@ -1,7 +1,7 @@
 #
 # compose.yaml - Lapong Docker Development Environment
 #
-# 3 containers: nginx + php-fpm + postgresql
+# 3 containers: nginx + php-fpm + postgresql (Laravel 12)
 #
 # Usage:
 #   make up      - Start all services
@@ -9,19 +9,18 @@
 #   make build   - Rebuild images
 #   make test    - Run tests
 #
-
 services:
 
     db:
         build:
             context: ./database/
-            dockerfile: postgresql.dockerfile
+            dockerfile: Dockerfile
 
         image: postgresql-image
         container_name: lapong-postgresql-container
 
-        ports:
-            - "127.0.0.1:2345:5432"
+        # Host network: PostgreSQL listens on 127.0.0.1:5432 (ports: ignored)
+        network_mode: host
 
         env_file:
             - .env
@@ -29,81 +28,52 @@ services:
         volumes:
             - ./database/data:/var/lib/postgresql/data
 
-        networks:
-            - lapong-network
-
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lapong} -d ${POSTGRES_DB:-lapongdb}"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
-            start_period: 30s
-
         restart: unless-stopped
 
     php:
         build:
-            context: ./php/
-            dockerfile: php.dockerfile
+            context: .
+            dockerfile: php/Dockerfile
+            args:
+                PHP_VERSION: "8.4"
 
         image: php-fpm-image
         container_name: lapong-php-fpm-container
+
+        network_mode: host
 
         env_file:
             - .env
 
         volumes:
             - ./src:/var/www/html
-
-        networks:
-            - lapong-network
+            - ./php/phpunit.xml.dist:/var/www/phpunit.xml.dist:ro
+            - ./php/tests:/var/www/tests:ro
 
         environment:
-            - POSTGRES_HOST=db
+            - POSTGRES_HOST=127.0.0.1
             - POSTGRES_PORT=5432
 
         depends_on:
-            db:
-                condition: service_healthy
-
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -h db -U ${POSTGRES_USER:-lapong} -d ${POSTGRES_DB:-lapongdb}"]
-            interval: 10s
-            timeout: 5s
-            retries: 3
+            - db
 
         restart: unless-stopped
 
     webserver:
         build:
             context: ./webserver/
-            dockerfile: nginx.dockerfile
+            dockerfile: Dockerfile
 
         image: nginx-image
         container_name: lapong-nginx-container
 
-        ports:
-            - "127.0.0.1:8080:80"
+        # Host network: nginx listens on 127.0.0.1:8080 (ports: ignored)
+        network_mode: host
 
         volumes:
-            - ./src/public:/var/www/html/public:ro
-
-        networks:
-            - lapong-network
+            - ./src:/var/www/html:ro
 
         depends_on:
-            php:
-                condition: service_healthy
-
-        healthcheck:
-            test: ["CMD-SHELL", "wget -qO- http://localhost:80/ > /dev/null || exit 0"]
-            interval: 10s
-            timeout: 5s
-            retries: 3
-            start_period: 10s
+            - php
 
         restart: unless-stopped
-
-networks:
-    lapong-network:
-        driver: bridge

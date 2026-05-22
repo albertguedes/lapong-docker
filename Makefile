@@ -1,10 +1,10 @@
-.PHONY: help build up down logs shell clean test status backup restore crontab
+.PHONY: help build up down logs shell clean test test-backup backup restore crontab test-unit test-integration status
 
 DOCKER := docker
 COMPOSE := $(DOCKER) compose
 
 help:
-	@echo "Lapong Docker Development Environment"
+	@echo "Lapong Docker Development Environment (Laravel 12)"
 	@echo ""
 	@echo "3 containers: nginx + php-fpm + postgresql"
 	@echo ""
@@ -15,14 +15,17 @@ help:
 	@echo "  make logs           View logs"
 	@echo "  make shell          Shell into container (service=php|db|webserver)"
 	@echo "  make clean          Remove containers and volumes"
-	@echo "  make test           Run HTTP and DB tests"
-	@echo "  make status         Show running containers"
-	@echo "  make backup         Backup database to backup/*.sql.gz"
+	@echo "  make test           Run all tests (curl + phpunit)"
+	@echo "  make test-unit      Run unit tests only"
+	@echo "  make test-integration  Run integration tests only"
+	@echo "  make test-backup    Run backup script tests"
+	@echo "  make backup         Backup database"
 	@echo "  make restore        Restore database (file=<backup>)"
 	@echo "  make crontab        Install crontab jobs"
+	@echo "  make status         Show running containers"
 
 build:
-	$(COMPOSE) build
+	$(COMPOSE) build --build-arg PHP_VERSION=8.4
 
 up:
 	$(COMPOSE) up -d
@@ -31,7 +34,11 @@ down:
 	$(COMPOSE) down
 
 logs:
-	$(COMPOSE) logs$(if $(service), $(service))
+ifdef service
+	$(COMPOSE) logs $(service)
+else
+	$(COMPOSE) logs
+endif
 
 shell:
 	@if [ -z "$(service)" ]; then \
@@ -53,20 +60,33 @@ status:
 	$(COMPOSE) ps
 
 test:
-	@echo "Testing..."
+	@echo "Testing endpoints..."
 	@curl -sf http://localhost:8080/ > /dev/null && echo "OK: /"
-	@curl -sf http://localhost:8080/index.php > /dev/null && echo "OK: /index.php"
+	@curl -sf http://localhost:8080/health > /dev/null && echo "OK: /health"
+	@curl -sf http://localhost:8080/up > /dev/null && echo "OK: /up"
+	@curl -sf http://localhost:8080/metrics.php > /dev/null && echo "OK: /metrics.php"
 	@$(DOCKER) exec lapong-postgresql-container pg_isready -U lapong -d lapongdb && echo "OK: db"
-	@echo "All tests passed"
+	@echo ""
+	@echo "Running PHPUnit tests..."
+	@$(COMPOSE) run --rm php php /usr/local/bin/phpunit --configuration /var/www/phpunit.xml.dist
 
-crontab:
-	@echo "Installing crontab..."
-	@cat crontab.txt | crontab -
-	@echo "Done. Crontab installed:"
-	@crontab -l
+test-unit:
+	@$(COMPOSE) run --rm php php /usr/local/bin/phpunit --configuration /var/www/phpunit.xml.dist --testsuite=Unit
+
+test-integration:
+	@$(COMPOSE) run --rm php php /usr/local/bin/phpunit --configuration /var/www/phpunit.xml.dist --testsuite=Integration
+
+test-backup:
+	@bash backup/test_backup.sh
 
 backup:
 	@bash backup/backup.sh
 
 restore:
 	@bash backup/restore.sh $(file)
+
+crontab:
+	@echo "Installing crontab..."
+	@cat crontab.txt | crontab -
+	@echo "Done. Crontab installed:"
+	@crontab -l

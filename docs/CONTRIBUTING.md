@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing.
 
+This project follows the [minimal_viable](https://github.com/albertguedes/minimal-viable-docker-development-environment) Docker stack patterns (host networking, Makefile, backup/CI). Laravel-specific changes belong in `src/`; infrastructure changes should stay aligned with that template where possible.
+
 ---
 
 ## Development Workflow
@@ -29,10 +31,14 @@ git checkout -b feature/your-feature-name
 
 ```bash
 make build && make up
-curl http://localhost:8080/
-make test
+make test              # HTTP + full PHPUnit suite
+make test-unit         # Unit tests only
+make test-integration  # Integration tests only
+make test-backup       # Backup scripts (modifies DB — use dev data only)
 make down
 ```
+
+Ensure no other stack is bound to ports **8080**, **9000**, or **5432** on the host.
 
 ### 5. Commit and Push
 
@@ -47,8 +53,9 @@ git push origin feature/your-feature-name
 ## Security Guidelines
 
 - **Never commit secrets** (passwords, API keys, tokens)
-- Use `.env` files for sensitive configuration
+- Use `.env` and `src/.env` for sensitive configuration (both gitignored)
 - Verify `.gitignore` excludes sensitive files
+- Use `backup/config.local.sh` for backup provider credentials (gitignored)
 
 ---
 
