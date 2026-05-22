@@ -1,6 +1,12 @@
 # Changelog
 
-## [v0.10.1] - 2026-05-22
+## [v0.10.2] - 2026-05-22
+
+### Fixed
+- Nginx: `/invalid.html` and other non-existent paths now correctly return 404 instead of 200
+
+### Changed
+- Nginx config: added static file location block for assets (css|js|jpg|png|etc) with `try_files $uri =404`
 
 ### Changed
 - Synced infrastructure with minimal_viable v0.10.1 (host networking, Dockerfile naming, backup/CI)
