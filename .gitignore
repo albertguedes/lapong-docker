@@ -18,3 +18,5 @@ app/.fleet
 app/.idea
 app/.vscode
 .vscode
+AGENTS.md
+.env
