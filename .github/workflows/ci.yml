@@ -119,7 +119,8 @@ jobs:
     permissions:
       contents: read
       actions: read
-      security-events: write
+      security-events: read
+      id-token: write
 
     steps:
       - name: Checkout
