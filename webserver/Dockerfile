@@ -1,7 +1,7 @@
 #
 # Dockerfile - nginx image
 #
-FROM nginx:1.27-alpine
+FROM nginx:1.27.5-alpine
 
 RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx && \
     touch /var/run/nginx.pid && \
