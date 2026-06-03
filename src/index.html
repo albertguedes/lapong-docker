@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAPONG - PHP Docker Stack</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #2c3e50;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 30px 40px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e1e5eb;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #007bff 0%, #6f42c1 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .logo h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .logo span {
+            font-size: 12px;
+            color: #6c757d;
+            font-weight: 400;
+        }
+
+        .version-badge {
+            font-size: 11px;
+            background: #e8f4ff;
+            color: #007bff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid #cce5ff;
+        }
+
+        .timestamp {
+            font-size: 13px;
+            color: #6c757d;
+            background: #f8f9fa;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #e1e5eb;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e5eb;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-dot.green { background: #28a745; }
+        .status-dot.blue { background: #007bff; }
+        .status-dot.orange { background: #fd7e14; }
+        .status-dot.purple { background: #6f42c1; }
+        .status-dot.teal { background: #009688; }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e1e5eb;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .card-icon.nginx { background: linear-gradient(135deg, #009639 0%, #006400 100%); color: white; }
+        .card-icon.php { background: linear-gradient(135deg, #777 0%, #444 100%); color: white; }
+        .card-icon.laravel { background: linear-gradient(135deg, #ff2d20 0%, #e00000 100%); color: white; }
+        .card-icon.lumen { background: linear-gradient(135deg, #009688 0%, #00796b 100%); color: white; }
+        .card-icon.pg { background: linear-gradient(135deg, #336791 0%, #1a3a5c 100%); color: white; }
+        .card-icon.jwt { background: linear-gradient(135deg, #6f42c1 0%, #5a32a0 100%); color: white; }
+
+        .card-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .card-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-top: 4px;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .gateways-section {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e1e5eb;
+            margin-bottom: 24px;
+        }
+
+        .gateways-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        .gateway-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #e1e5eb;
+        }
+
+        .gateway-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .gateway-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .gateway-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-weight: 600;
+            background: #009639;
+            color: white;
+        }
+
+        .gateway-routes {
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.8;
+        }
+
+        .gateway-routes code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .frameworks-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .framework-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e1e5eb;
+        }
+
+        .framework-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .framework-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .framework-name h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .framework-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .badge-php { background: #777; color: white; }
+        .badge-laravel { background: #ff2d20; color: white; }
+        .badge-lumen { background: #009688; color: white; }
+
+        .framework-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .framework-table th {
+            text-align: left;
+            padding: 6px 10px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            font-weight: 600;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e1e5eb;
+        }
+
+        .framework-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .framework-table tr:last-child td { border-bottom: none; }
+
+        .method {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .method-post {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .framework-path {
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .features-section {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e1e5eb;
+            margin-bottom: 24px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #2c3e50;
+        }
+
+        .feature-item::before {
+            content: '✓';
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        footer a:hover { text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            .header-content { flex-direction: column; align-items: flex-start; }
+            .cards-grid { grid-template-columns: 1fr 1fr; }
+            .gateways-grid { grid-template-columns: 1fr; }
+            .frameworks-section { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">L</div>
+                    <div>
+                        <h1>LAPONG</h1>
+                        <span>PHP Docker Development Stack</span>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <span class="version-badge">v1.0.0</span>
+                    <div class="timestamp">June 2026</div>
+                </div>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot green"></span>
+                    <span>4 Containers Online</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot blue"></span>
+                    <span>nginx Gateway</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot teal"></span>
+                    <span>PostgreSQL 17</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot purple"></span>
+                    <span>JWT Bearer Auth</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon nginx">ng</div>
+                    <div class="card-title">Gateway</div>
+                </div>
+                <div class="card-value">1.27</div>
+                <div class="card-subtitle">nginx Alpine</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon pg">PG</div>
+                    <div class="card-title">Database</div>
+                </div>
+                <div class="card-value">17</div>
+                <div class="card-subtitle">PostgreSQL</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon php">PHP</div>
+                    <div class="card-title">PHP App</div>
+                </div>
+                <div class="card-value">8.4</div>
+                <div class="card-subtitle">CGI · :8000</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon laravel">La</div>
+                    <div class="card-title">Laravel</div>
+                </div>
+                <div class="card-value">12.x</div>
+                <div class="card-subtitle">FPM · :8001</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon lumen">Lu</div>
+                    <div class="card-title">Lumen</div>
+                </div>
+                <div class="card-value">10.x</div>
+                <div class="card-subtitle">FPM · :8002</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon jwt">JWT</div>
+                    <div class="card-title">Auth</div>
+                </div>
+                <div class="card-value">/v1</div>
+                <div class="card-subtitle">HS256 · 15min TTL</div>
+            </div>
+        </div>
+
+        <div class="gateways-section">
+            <h2 class="section-title">nginx Reverse Proxy</h2>
+            <p style="color: #6c757d; font-size: 14px; margin-bottom: 16px;">
+                All traffic routes through nginx on port 8080. Direct access to app ports 8000, 8001, 8002 bypass nginx.
+            </p>
+            <div class="gateways-grid">
+                <div class="gateway-card">
+                    <div class="gateway-header">
+                        <span class="gateway-name">nginx:8080</span>
+                        <span class="gateway-badge">Entry Point</span>
+                    </div>
+                    <div class="gateway-routes">
+                        <code>/</code> → static dashboard (index.html)<br>
+                        <code>/health</code> → health check<br>
+                        <code>:8000</code> → PHP app<br>
+                        <code>:8001</code> → Laravel app<br>
+                        <code>:8002</code> → Lumen API
+                    </div>
+                </div>
+                <div class="gateway-card">
+                    <div class="gateway-header">
+                        <span class="gateway-name">Rate Limiting</span>
+                        <span class="gateway-badge">nginx</span>
+                    </div>
+                    <div class="gateway-routes">
+                        Auth routes: <code>10r/s</code> burst 20<br>
+                        API routes: <code>100r/s</code> burst 200<br>
+                        Health/metrics: <code>unlimited</code>
+                    </div>
+                </div>
+                <div class="gateway-card">
+                    <div class="gateway-header">
+                        <span class="gateway-name">CORS Headers</span>
+                        <span class="gateway-badge">nginx</span>
+                    </div>
+                    <div class="gateway-routes">
+                        <code>Access-Control-Allow-Origin</code><br>
+                        <code>Access-Control-Allow-Methods</code><br>
+                        <code>Access-Control-Allow-Headers</code><br>
+                        <code>Access-Control-Max-Age: 86400</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <h2 class="section-title">Stack Features</h2>
+            <div class="features-grid">
+                <div class="feature-item">JWT Authentication (Lumen API)</div>
+                <div class="feature-item">Session Auth (Laravel)</div>
+                <div class="feature-item">Rate Limiting (nginx)</div>
+                <div class="feature-item">Prometheus Metrics</div>
+                <div class="feature-item">Sentry Error Tracking</div>
+                <div class="feature-item">CORS Preflight</div>
+                <div class="feature-item">Request ID Propagation</div>
+                <div class="feature-item">JSON Structured Logs</div>
+                <div class="feature-item">Health + DB Checks</div>
+                <div class="feature-item">Non-root Containers</div>
+                <div class="feature-item">TLS-ready (nginx)</div>
+                <div class="feature-item">Automated DB Backups</div>
+            </div>
+        </div>
+
+        <div class="frameworks-section">
+            <div class="framework-card">
+                <div class="framework-header">
+                    <div class="framework-name">
+                        <div class="card-icon php" style="width:28px;height:28px;font-size:11px;">PHP</div>
+                        <h3>PHP App</h3>
+                    </div>
+                    <span class="framework-badge badge-php">CGI · :8000</span>
+                </div>
+                <table class="framework-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Path</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="method">GET</span></td><td><span class="framework-path">:8000/</span></td></tr>
+                        <tr><td><span class="method">GET</span></td><td><span class="framework-path">:8000/about</span></td></tr>
+                        <tr><td><span class="method">GET</span></td><td><span class="framework-path">:8000/contact</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="framework-card">
+                <div class="framework-header">
+                    <div class="framework-name">
+                        <div class="card-icon laravel" style="width:28px;height:28px;font-size:11px;">La</div>
+                        <h3>Laravel</h3>
+                    </div>
+                    <span class="framework-badge badge-laravel">FPM · :8001</span>
+                </div>
+                <table class="framework-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Path</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="method">GET</span></td><td><span class="framework-path">:8001/</span></td></tr>
+                        <tr><td><span class="method">GET</span></td><td><span class="framework-path">:8001/login</span></td></tr>
+                        <tr><td><span class="method">GET</span></td><td><span class="framework-path">:8001/register</span></td></tr>
+                        <tr><td><span class="method">GET</span></td><td><span class="framework-path">:8001/dashboard</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="framework-card">
+                <div class="framework-header">
+                    <div class="framework-name">
+                        <div class="card-icon lumen" style="width:28px;height:28px;font-size:11px;">Lu</div>
+                        <h3>Lumen</h3>
+                    </div>
+                    <span class="framework-badge badge-lumen">FPM · :8002</span>
+                </div>
+                <table class="framework-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Path</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="method">GET</span></td><td><span class="framework-path">:8002/</span></td></tr>
+                        <tr><td><span class="method-post">POST</span></td><td><span class="framework-path">:8002/api/v1/auth/register</span></td></tr>
+                        <tr><td><span class="method-post">POST</span></td><td><span class="framework-path">:8002/api/v1/auth/login</span></td></tr>
+                        <tr><td><span class="method">GET</span></td><td><span class="framework-path">:8002/api/v1/users</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            <p>LAPONG &copy; 2026 &mdash; PHP Docker Stack</p>
+            <p style="margin-top: 8px;">
+                <a href="http://localhost:8000/">PHP App</a> &nbsp;&middot;&nbsp;
+                <a href="http://localhost:8001/">Laravel</a> &nbsp;&middot;&nbsp;
+                <a href="http://localhost:8002/api/v1/health">Lumen API</a> &nbsp;&middot;&nbsp;
+                <a href="/docs/API.md">API Docs</a> &nbsp;&middot;&nbsp;
+                <a href="/docs/DEPLOY.md">Deploy Guide</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

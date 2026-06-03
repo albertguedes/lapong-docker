@@ -33,6 +33,17 @@ src/yarn-error.log
 src/.fleet
 src/.idea
 
+# Laravel Apps (src/laravel and src/lumen)
+src/laravel/vendor/
+src/laravel/node_modules/
+src/lumen/vendor/
+src/lumen/storage/logs/*.log
+src/lumen/.env
+
+# App directories
+src/app/public/
+src.laravel.backup/
+
 # Agent
 AGENTS.md
 .idea/

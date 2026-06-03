@@ -21,10 +21,16 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+env:
+  DOCKER_BUILDKIT: "1"
+
 jobs:
-  release:
-    name: Release ${{ github.ref_name }}
+  verify:
+    name: Verify release prerequisites
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
 
     steps:
       - name: Checkout
@@ -38,9 +44,108 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Release notes preview
+      - name: Verify VERSION file matches tag
         run: |
-          echo "Preparing release ${{ steps.version.outputs.tag }}"
+          FILE_VERSION=$(cat VERSION)
+          if [ "$FILE_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "ERROR: VERSION file has '$FILE_VERSION' but tag is '${{ steps.version.outputs.version }}'"
+            exit 1
+          fi
+          echo "VERSION file matches: $FILE_VERSION"
+
+      - name: Verify CHANGELOG.md has entry for version
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if ! grep -q "## \[${TAG}\]" docs/CHANGELOG.md; then
+            echo "ERROR: No CHANGELOG entry found for ${TAG}"
+            exit 1
+          fi
+          echo "CHANGELOG entry verified"
+
+  test:
+    name: Pre-release test
+    runs-on: ubuntu-latest
+    needs: verify
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: lapongdb
+          POSTGRES_USER: lapong
+          POSTGRES_PASSWORD: lapong
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd=pg_isready
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+          --health-start-period=30s
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Create .env file
+        run: |
+          cat > .env << 'EOF'
+          POSTGRES_DB=lapongdb
+          POSTGRES_USER=lapong
+          POSTGRES_PASSWORD=lapong
+          EOF
+
+      - name: Build PHP image
+        run: docker compose build --build-arg PHP_VERSION=8.4 php
+
+      - name: Start Docker Compose stack
+        run: docker compose up -d
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in {1..30}; do
+            if pg_isready -h 127.0.0.1 -p 5432 -U lapong > /dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: Run Unit tests
+        run: docker compose run --rm php php /usr/local/bin/phpunit --configuration /var/www/phpunit.xml.dist --testsuite=Unit
+        env:
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: lapongdb
+          POSTGRES_USER: lapong
+          POSTGRES_PASSWORD: lapong
+
+      - name: Run Integration tests
+        run: docker compose run --rm php php /usr/local/bin/phpunit --configuration /var/www/phpunit.xml.dist --testsuite=Integration
+        env:
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: lapongdb
+          POSTGRES_USER: lapong
+          POSTGRES_PASSWORD: lapong
+
+  build:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+    needs: [verify, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [linux/amd64, linux/arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -67,9 +172,11 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./database
+          platforms: ${{ matrix.arch }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/db:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository }}/db:${{ needs.verify.outputs.version }}-${{ matrix.arch }}
+            ghcr.io/${{ github.repository }}/db:${{ needs.verify.outputs.version }}
             ghcr.io/${{ github.repository }}/db:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -79,10 +186,12 @@ jobs:
         with:
           context: .
           file: php/Dockerfile
+          platforms: ${{ matrix.arch }}
           build-args: PHP_VERSION=8.4
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/php:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository }}/php:${{ needs.verify.outputs.version }}-${{ matrix.arch }}
+            ghcr.io/${{ github.repository }}/php:${{ needs.verify.outputs.version }}
             ghcr.io/${{ github.repository }}/php:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -91,32 +200,176 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./webserver
+          platforms: ${{ matrix.arch }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/webserver:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository }}/webserver:${{ needs.verify.outputs.version }}-${{ matrix.arch }}
+            ghcr.io/${{ github.repository }}/webserver:${{ needs.verify.outputs.version }}
             ghcr.io/${{ github.repository }}/webserver:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    needs: [verify, build]
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Run Trivy vulnerability scanner in SBOM mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: cyclonedx
+          output: sbom.json
+          dependency-tree: true
+
+      - name: Upload SBOM as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ needs.verify.outputs.version }}
+          path: sbom.json
+          retention-days: 90
+
+  structure-test:
+    name: Container structure test
+    runs-on: ubuntu-latest
+    needs: [verify, build]
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - db
+          - php
+          - webserver
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pull image for testing
+        run: |
+          docker pull ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.verify.outputs.version }}
+          docker pull ghcr.io/${{ github.repository }}/${{ matrix.image }}:latest
+
+      - name: Test image has non-root user
+        run: |
+          case '${{ matrix.image }}' in
+            db)
+              USER=$(docker run --rm ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.verify.outputs.version }} whoami)
+              ;;
+            php)
+              USER=$(docker run --rm ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.verify.outputs.version }} whoami)
+              ;;
+            webserver)
+              USER=$(docker run --rm ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.verify.outputs.version }} whoami)
+              ;;
+          esac
+          if [ "$USER" = "root" ]; then
+            echo "ERROR: ${{ matrix.image }} image is running as root"
+            exit 1
+          fi
+          echo "OK: ${{ matrix.image }} runs as $USER"
+
+      - name: Test image has exposed port
+        run: |
+          case '${{ matrix.image }}' in
+            db)
+              PORT=$(docker run --rm ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.verify.outputs.version }} cat /proc/net/tcp | awk '{print $2}' | cut -d: -f2 | head -1)
+              ;;
+            php)
+              PORT=9000
+              ;;
+            webserver)
+              PORT=$(docker run --rm ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.verify.outputs.version }} cat /etc/nginx/nginx.conf | grep 'listen' | head -1)
+              ;;
+          esac
+          echo "Port check: $PORT"
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [verify, build, sbom, structure-test]
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-${{ needs.verify.outputs.version }}
+          path: .
+
       - name: Generate release notes
+        id: notes
+        run: |
+          TAG="${{ needs.verify.outputs.tag }}"
+          VERSION="${{ needs.verify.outputs.version }}"
+
+          SECTION=$(awk -v tag="## \[${TAG}\]" '
+            $0 == tag { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' docs/CHANGELOG.md)
+
+          if [ -z "$SECTION" ]; then
+            SECTION="No changelog details for this release."
+          fi
+
+          cat > release_notes.md << EOF
+          ## Docker Images
+
+          Multi-architecture images available on GitHub Container Registry:
+
+          \`\`\`bash
+          # amd64
+          docker pull ghcr.io/${{ github.repository }}/webserver:${VERSION}
+          docker pull ghcr.io/${{ github.repository }}/php:${VERSION}
+          docker pull ghcr.io/${{ github.repository }}/db:${VERSION}
+
+          # arm64
+          docker pull ghcr.io/${{ github.repository }}/webserver:${VERSION}-linux/arm64
+          docker pull ghcr.io/${{ github.repository }}/php:${VERSION}-linux/arm64
+          docker pull ghcr.io/${{ github.repository }}/db:${VERSION}-linux/arm64
+          \`\`\`
+
+          ## Changelog
+
+          ${SECTION}
+
+          ## Images
+
+          - \`ghcr.io/${{ github.repository }}/webserver:${VERSION}\`
+          - \`ghcr.io/${{ github.repository }}/php:${VERSION}\`
+          - \`ghcr.io/${{ github.repository }}/db:${VERSION}\`
+          EOF
+          echo "notes_file=release_notes.md" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          body: |
-            ## Docker Images
-
-            Images available on GitHub Container Registry:
-
-            ```bash
-            # GitHub Container Registry (GHCR)
-            docker pull ghcr.io/${{ github.repository }}/webserver:${{ steps.version.outputs.version }}
-            docker pull ghcr.io/${{ github.repository }}/php:${{ steps.version.outputs.version }}
-            docker pull ghcr.io/${{ github.repository }}/db:${{ steps.version.outputs.version }}
-            ```
-
-            See [CHANGELOG.md](./docs/CHANGELOG.md) for full release notes.
-          generate_release_notes: true
+          body_path: ${{ steps.notes.outputs.notes_file }}
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Image digest
-        run: echo "Release ${{ steps.version.outputs.tag }} complete"
+      - name: Upload SBOM to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.verify.outputs.tag }}
+          files: sbom.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

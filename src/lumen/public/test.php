@@ -1,0 +1,8 @@
+<?php
+echo json_encode([
+    'REQUEST_URI' => $_SERVER['REQUEST_URI'] ?? 'NOT SET',
+    'SCRIPT_NAME' => $_SERVER['SCRIPT_NAME'] ?? 'NOT SET',
+    'SCRIPT_FILENAME' => $_SERVER['SCRIPT_FILENAME'] ?? 'NOT SET',
+    'QUERY_STRING' => $_SERVER['QUERY_STRING'] ?? 'NOT SET',
+    'PATH_INFO' => $_SERVER['PATH_INFO'] ?? 'NOT SET',
+]);

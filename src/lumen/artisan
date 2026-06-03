@@ -1,0 +1,14 @@
+#!/usr/bin/env php
+<?php
+
+require_once __DIR__.'/vendor/autoload.php';
+
+$app = new Laravel\Lumen\Application(dirname(__DIR__));
+
+$app->register(\Tymon\JWTAuth\Providers\LumenServiceProvider::class);
+
+$app->withFacades();
+
+$app->register(\Laravel\Lumen\Console\ConsoleServiceProvider::class);
+
+$app->run();

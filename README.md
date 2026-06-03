@@ -28,19 +28,59 @@ A production-ready Docker development environment for **Laravel 12** application
 ┌─────────────────────────────────────────────────────────────────┐
 │                         HOST MACHINE                            │
 │                                                                 │
-│   127.0.0.1:8080  ── nginx (lapong-nginx-container)             │
+│   127.0.0.1:8080  ── nginx (Main API Gateway)                   │
+│                         │                                       │
+│                         ├── /api/* → Laravel API                │
+│                         ├── /laravel/* → Laravel App            │
+│                         └── /lumen/* → Lumen API                  │
 │                         │ fastcgi_pass 127.0.0.1:9000           │
 │                         ▼                                       │
 │   127.0.0.1:9000  ── PHP-FPM (lapong-php-fpm-container)         │
+│                         │                                       │
+│   127.0.0.1:8001  ── Laravel API (direct)                       │
+│   127.0.0.1:8002  ── Lumen API (direct)                         │
 │                         ▼                                       │
 │   127.0.0.1:5432  ── PostgreSQL (lapong-postgresql-container)   │
 │                                                                 │
-│   ./src ──────────────────────▶ /var/www/html (php + nginx)     │
+│   ./src/laravel ─────────────▶ /var/www/html/laravel            │
+│   ./src/lumen ────────────────▶ /var/www/html/lumen             │
 │   ./database/data ────────────▶ /var/lib/postgresql/data        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 All services use **host networking** (see `compose.yaml`).
+
+### API Endpoints
+
+#### Laravel API (port 8080, path: `/api/*`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/register` | Register new user |
+| POST | `/api/login` | Login and get JWT token |
+| GET | `/api/me` | Get authenticated user |
+| POST | `/api/refresh` | Refresh JWT token |
+| POST | `/api/logout` | Invalidate token |
+
+#### Laravel App (port 8080, path: `/laravel/*`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/laravel/` | Laravel welcome page |
+| GET | `/laravel/health` | Laravel health check |
+
+#### Lumen API (port 8080, path: `/lumen/*`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/lumen/api/v1/auth/register` | Register new user |
+| POST | `/lumen/api/v1/auth/login` | Login and get JWT token |
+| GET | `/lumen/api/v1/auth/me` | Get authenticated user |
+| POST | `/lumen/api/v1/auth/refresh` | Refresh JWT token |
+| POST | `/lumen/api/v1/auth/logout` | Invalidate token |
+
+#### Direct Access (bypass gateway)
+| Port | Path | Purpose |
+|------|------|---------|
+| 8001 | `/` | Laravel directly |
+| 8002 | `/api/v1/auth/*` | Lumen API directly |
 
 ---
 
@@ -120,11 +160,25 @@ docker exec -it lapong-php-fpm-container composer require <package>
 
 ## Endpoints
 
+### Main Gateway (Port 8080)
+
 | URL | Method | Description |
 |-----|--------|-------------|
-| http://localhost:8080/ | GET | Laravel application |
+| http://localhost:8080/ | GET | Dashboard (index.html) |
 | http://localhost:8080/health | GET | Nginx health check (returns "OK") |
-| http://localhost:8080/up | GET | Laravel health check |
+| http://localhost:8080/api/register | POST | Laravel JWT registration |
+| http://localhost:8080/api/login | POST | Laravel JWT login |
+| http://localhost:8080/api/me | GET | Laravel authenticated user |
+| http://localhost:8080/laravel/ | GET | Laravel welcome page |
+| http://localhost:8080/lumen/api/v1/auth/register | POST | Lumen JWT registration |
+| http://localhost:8080/lumen/api/v1/auth/login | POST | Lumen JWT login |
+
+### Direct Access
+
+| URL | Method | Description |
+|-----|--------|-------------|
+| http://localhost:8001/ | GET | Laravel (direct) |
+| http://localhost:8002/api/v1/auth/login | POST | Lumen API (direct) |
 | http://localhost:8080/metrics.php | GET | JSON metrics (db size, connections, php info) |
 
 ---
@@ -170,18 +224,36 @@ DB_PASSWORD=lapong
 │   └── tests/
 ├── security/               # Security configs
 │   └── jail.local          # Fail2ban configuration
-├── src/                    # Laravel application
-│   ├── public/
-│   │   └── metrics.php    # JSON metrics endpoint
-│   └── .env               # Laravel configuration
+├── src/                    # Applications
+│   ├── index.html          # Dashboard
+│   ├── laravel/            # Laravel 12 API (port 8001)
+│   │   ├── app/
+│   │   ├── bootstrap/
+│   │   ├── config/
+│   │   ├── public/
+│   │   ├── routes/
+│   │   ├── vendor/
+│   │   ├── tests/
+│   │   ├── .env
+│   │   └── composer.json
+│   └── lumen/              # Lumen API (port 8002)
+│       ├── app/
+│       ├── bootstrap/
+│       ├── config/
+│       ├── public/
+│       ├── vendor/
+│       ├── tests/
+│       ├── .env
+│       └── composer.json
 ├── webserver/              # Nginx service
 │   ├── Dockerfile
 │   └── nginx/
 │       ├── nginx.conf     # Main nginx config
-│       └── default.conf   # Server config
+│       └── default.conf   # Server config (multi-port)
 ├── compose.yaml            # Docker Compose v2
 ├── Makefile                # Developer commands
 ├── crontab.txt             # Cron jobs for backups
+├── CHANGELOG.md            # Version history
 └── .env.example            # Environment template
 ```
 
