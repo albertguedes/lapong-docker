@@ -11,3 +11,31 @@ updates:
           - "postgres:*"
           - "php:*"
           - "nginx:*"
+
+  - package-ecosystem: "composer"
+    directory: "/src"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      php-packages:
+        patterns:
+          - "laravel/*"
+          - "symfony/*"
+
+  - package-ecosystem: "composer"
+    directory: "/src/laravel"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      php-packages:
+        patterns:
+          - "laravel/*"
+          - "symfony/*"
+
+  - package-ecosystem: "composer"
+    directory: "/src/lumen"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
