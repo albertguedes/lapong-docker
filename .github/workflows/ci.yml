@@ -118,9 +118,7 @@ jobs:
     needs: [lint]
     permissions:
       contents: read
-      actions: read
-      security-events: read
-      id-token: write
+      security-events: write
 
     steps:
       - name: Checkout
@@ -136,13 +134,7 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
 
-      - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-results.sarif
-
-      - name: Upload artifact on failure
-        if: failure()
+      - name: Upload Trivy report as artifact
         uses: actions/upload-artifact@v4
         with:
           name: trivy-report
